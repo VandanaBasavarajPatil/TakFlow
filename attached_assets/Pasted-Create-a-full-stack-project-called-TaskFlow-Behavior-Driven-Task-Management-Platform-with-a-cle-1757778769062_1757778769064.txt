@@ -1,0 +1,120 @@
+Create a full-stack project called **TaskFlow: Behavior-Driven Task Management Platform** with a clean, professional, and well-structured architecture. The project should include a modern **React frontend** and a powerful **Django backend with MySQL database**.
+
+===============================
+ FRONTEND (React + Tailwind + TypeScript)
+===============================
+- Framework: React (Vite + TypeScript)
+- Styling: Tailwind CSS + shadcn/ui components
+- Animations: Framer Motion
+- Icons: lucide-react
+- Charts: Recharts for visualizations
+- Layout: Responsive with sidebar navigation + top navbar
+
+### Components & Pages
+1. **Global Layout**
+   - Left sidebar: Dashboard, Kanban Board, Calendar, Projects, Analytics, Time Tracking, Team, Settings
+   - Top navbar: Search bar, Create button, Notifications, Profile menu
+   - Fully responsive (desktop & mobile)
+
+2. **Dashboard**
+   - Cards: Tasks Completed, Avg Completion Time, Team Productivity, Overdue Tasks
+   - AI Productivity Insights: Focus Time, Completion Rate, Team Velocity, Best Work Hours
+   - Sections for Active Projects and Recent Tasks
+
+3. **Projects**
+   - Grid of project cards with: title, description, status (active/planning/completed), deadline, team members, progress bar
+   - Create Project modal with form
+
+4. **Kanban Board**
+   - Columns: To Do, In Progress, Review, Done
+   - Drag-and-drop Task Cards with: title, description, priority (low/medium/high/urgent), due date, assignee avatar, progress bar
+   - Add Task button in each column
+
+5. **Calendar**
+   - Month/Week toggle
+   - Tasks displayed by due date
+   - Sidebar: Unscheduled Tasks, Quick Stats (completed, overdue, due this week)
+   - Filters for project & priority
+
+6. **Analytics**
+   - Charts for productivity trends, completed tasks, time spent, team performance
+   - Filters by date range and project
+
+7. **Time Tracking**
+   - Task timers (start/stop, total time)
+   - Daily/weekly summaries
+   - Chart of hours worked
+
+8. **Team**
+   - List of team members with roles (Scrum Master / Employee)
+   - Show avatars, tasks assigned, activity
+   - Add/remove members option
+
+9. **Settings**
+   - Profile update (name, email, password, avatar)
+   - Notification preferences
+   - Light/Dark mode toggle
+
+10. **Reusable Components**
+   - TaskCard, ProjectCard, Chart components, Modal components
+
+===============================
+ BACKEND (Django REST + MySQL)
+===============================
+- Framework: Django + Django REST Framework
+- Database: MySQL (using mysqlclient)
+- Authentication: JWT-based (djangorestframework-simplejwt)
+- File Uploads: Local dev storage, AWS S3 ready
+- Analytics: Pandas for data aggregation
+- Deployment: Config for Heroku/AWS
+
+### Backend Features
+1. **User Management & Roles**
+   - JWT login/registration
+   - Profile management (name, email, avatar, password)
+   - Roles: Scrum Master (admin), Employee (restricted)
+   - Permissions enforced via DRF
+
+2. **Projects API**
+   - CRUD operations
+   - Add/remove members, assign roles
+   - Return details: deadlines, team, progress %
+
+3. **Tasks API**
+   - CRUD operations
+   - Assign task to project + user
+   - Kanban workflow: To Do → In Progress → Review → Done
+   - Include priority, tags, due date, progress
+   - Comments, attachments, activity logs
+
+4. **Collaboration**
+   - Comments API (CRUD)
+   - Attachments API (upload/download)
+   - Activity logs API
+
+5. **Calendar & Reminders**
+   - Fetch tasks by due date
+   - Reminders & notifications
+   - Filter by project/priority
+
+6. **Analytics**
+   - Capture behavioral data: time spent, edits, completions
+   - Return JSON metrics: completed tasks, avg completion time, productivity trends, focus analysis
+   - Data aggregation using Pandas
+
+7. **Time Tracking**
+   - Start/stop timers per task
+   - Track total time
+   - Daily/weekly summaries
+
+8. **Team Management**
+   - List all team members
+   - CRUD for adding/removing
+   - Show assigned tasks
+
+9. **Settings**
+   - Profile update
+   - Notification preferences
+   - Theme preferences
+
+### Backend Folder Structure
