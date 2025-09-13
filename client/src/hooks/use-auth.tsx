@@ -56,6 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (response.ok) {
       const data = await response.json();
+      // Set loading to false first to prevent AppLayout race condition
+      setIsLoading(false);
       setToken(data.token);
       setUser(data.user);
       localStorage.setItem("token", data.token);
