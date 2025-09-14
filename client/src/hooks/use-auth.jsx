@@ -1,25 +1,15 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { User } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
-interface AuthContextType {
-  user: User | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
-  isLoading: boolean;
-  token: string | null;
-}
+const AuthContext = createContext(undefined);
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
-      // Validate token and get user info
       fetch("/api/auth/me", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -36,7 +26,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(userData);
         })
         .catch(() => {
-          // Invalid token, remove it
           localStorage.removeItem("token");
           setToken(null);
         })
@@ -48,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token]);
 
-  const login = async (username: string, password: string) => {
+  const login = async (username, password) => {
     const response = await apiRequest("POST", "/api/auth/login", {
       username,
       password,
@@ -56,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (response.ok) {
       const data = await response.json();
-      // Set loading to false first to prevent AppLayout race condition
       setIsLoading(false);
       setToken(data.token);
       setUser(data.user);

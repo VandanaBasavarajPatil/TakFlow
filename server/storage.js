@@ -1,92 +1,7 @@
-import { 
-  type User, 
-  type InsertUser, 
-  type Project, 
-  type InsertProject,
-  type Task,
-  type InsertTask,
-  type TimeEntry,
-  type InsertTimeEntry,
-  type Comment,
-  type InsertComment,
-  type ActivityLog,
-  type UserSettings,
-  type ProjectMember
-} from "@shared/schema";
 import { randomUUID } from "crypto";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs";
 
-export interface IStorage {
-  // User management
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined>;
-  getAllUsers(): Promise<User[]>;
-
-  // Project management
-  createProject(project: InsertProject): Promise<Project>;
-  getProject(id: string): Promise<Project | undefined>;
-  getProjectsByUser(userId: string): Promise<Project[]>;
-  updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined>;
-  deleteProject(id: string): Promise<boolean>;
-  addProjectMember(projectId: string, userId: string, role?: string): Promise<ProjectMember>;
-  getProjectMembers(projectId: string): Promise<(ProjectMember & { user: User })[]>;
-
-  // Task management
-  createTask(task: InsertTask): Promise<Task>;
-  getTask(id: string): Promise<Task | undefined>;
-  getTasksByProject(projectId: string): Promise<Task[]>;
-  getTasksByUser(userId: string): Promise<Task[]>;
-  updateTask(id: string, updates: Partial<InsertTask>): Promise<Task | undefined>;
-  deleteTask(id: string): Promise<boolean>;
-
-  // Time tracking
-  createTimeEntry(entry: InsertTimeEntry): Promise<TimeEntry>;
-  getTimeEntriesByTask(taskId: string): Promise<TimeEntry[]>;
-  getTimeEntriesByUser(userId: string): Promise<TimeEntry[]>;
-  updateTimeEntry(id: string, updates: Partial<InsertTimeEntry>): Promise<TimeEntry | undefined>;
-  getActiveTimeEntry(userId: string): Promise<TimeEntry | undefined>;
-
-  // Comments
-  createComment(comment: InsertComment): Promise<Comment>;
-  getCommentsByTask(taskId: string): Promise<(Comment & { user: User })[]>;
-
-  // Activity logs
-  createActivityLog(log: Omit<ActivityLog, 'id' | 'createdAt'>): Promise<ActivityLog>;
-  getActivityLogsByUser(userId: string): Promise<ActivityLog[]>;
-
-  // User settings
-  getUserSettings(userId: string): Promise<UserSettings | undefined>;
-  updateUserSettings(userId: string, settings: Partial<UserSettings>): Promise<UserSettings>;
-
-  // Analytics
-  getTaskMetrics(userId?: string): Promise<{
-    completedTasks: number;
-    avgCompletionTime: number;
-    teamProductivity: number;
-    overdueTasks: number;
-  }>;
-
-  getDashboardInsights(userId?: string): Promise<{
-    focusTime: string;
-    completionRate: number;
-    teamVelocity: number;
-    bestWorkHours: string;
-  }>;
-}
-
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private projects: Map<string, Project>;
-  private tasks: Map<string, Task>;
-  private timeEntries: Map<string, TimeEntry>;
-  private comments: Map<string, Comment>;
-  private activityLogs: Map<string, ActivityLog>;
-  private userSettings: Map<string, UserSettings>;
-  private projectMembers: Map<string, ProjectMember>;
-
+export class MemStorage {
   constructor() {
     this.users = new Map();
     this.projects = new Map();
@@ -101,11 +16,11 @@ export class MemStorage implements IStorage {
     this.initializeDemoData();
   }
 
-  private async initializeDemoData() {
+  async initializeDemoData() {
     // Create demo users
-    const hashedPassword = await bcrypt.hash("password123", 10);
+    const hashedPassword = await bcryptjs.hash("password123", 10);
     
-    const johnDoe: User = {
+    const johnDoe = {
       id: randomUUID(),
       username: "johndoe",
       email: "john.doe@taskflow.com",
@@ -118,7 +33,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
 
-    const sarahJohnson: User = {
+    const sarahJohnson = {
       id: randomUUID(),
       username: "sarahjohnson",
       email: "sarah.johnson@taskflow.com",
@@ -135,7 +50,7 @@ export class MemStorage implements IStorage {
     this.users.set(sarahJohnson.id, sarahJohnson);
 
     // Create demo projects
-    const ecommerceProject: Project = {
+    const ecommerceProject = {
       id: randomUUID(),
       name: "E-commerce Platform",
       description: "Building a modern e-commerce platform with React and Node.js",
@@ -147,7 +62,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(),
     };
 
-    const mobileAppProject: Project = {
+    const mobileAppProject = {
       id: randomUUID(),
       name: "Mobile App Redesign",
       description: "Redesigning the mobile application for better user experience",
@@ -163,7 +78,7 @@ export class MemStorage implements IStorage {
     this.projects.set(mobileAppProject.id, mobileAppProject);
 
     // Create demo tasks
-    const tasks: Task[] = [
+    const tasks = [
       {
         id: randomUUID(),
         title: "Implement OAuth integration",
@@ -225,22 +140,22 @@ export class MemStorage implements IStorage {
     tasks.forEach(task => this.tasks.set(task.id, task));
   }
 
-  async getUser(id: string): Promise<User | undefined> {
+  async getUser(id) {
     return this.users.get(id);
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
+  async getUserByUsername(username) {
     return Array.from(this.users.values()).find(user => user.username === username);
   }
 
-  async getUserByEmail(email: string): Promise<User | undefined> {
+  async getUserByEmail(email) {
     return Array.from(this.users.values()).find(user => user.email === email);
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+  async createUser(insertUser) {
+    const hashedPassword = await bcryptjs.hash(insertUser.password, 10);
     const id = randomUUID();
-    const user: User = {
+    const user = {
       ...insertUser,
       id,
       password: hashedPassword,
@@ -253,7 +168,7 @@ export class MemStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: string, updates: Partial<InsertUser>): Promise<User | undefined> {
+  async updateUser(id, updates) {
     const user = this.users.get(id);
     if (!user) return undefined;
 
@@ -264,20 +179,20 @@ export class MemStorage implements IStorage {
     };
     
     if (updates.password) {
-      updatedUser.password = await bcrypt.hash(updates.password, 10);
+      updatedUser.password = await bcryptjs.hash(updates.password, 10);
     }
 
     this.users.set(id, updatedUser);
     return updatedUser;
   }
 
-  async getAllUsers(): Promise<User[]> {
+  async getAllUsers() {
     return Array.from(this.users.values());
   }
 
-  async createProject(insertProject: InsertProject): Promise<Project> {
+  async createProject(insertProject) {
     const id = randomUUID();
-    const project: Project = {
+    const project = {
       ...insertProject,
       id,
       status: insertProject.status ?? "planning",
@@ -291,11 +206,11 @@ export class MemStorage implements IStorage {
     return project;
   }
 
-  async getProject(id: string): Promise<Project | undefined> {
+  async getProject(id) {
     return this.projects.get(id);
   }
 
-  async getProjectsByUser(userId: string): Promise<Project[]> {
+  async getProjectsByUser(userId) {
     const userProjects = Array.from(this.projects.values()).filter(
       project => project.createdBy === userId
     );
@@ -303,12 +218,12 @@ export class MemStorage implements IStorage {
     const memberProjects = Array.from(this.projectMembers.values())
       .filter(member => member.userId === userId)
       .map(member => this.projects.get(member.projectId))
-      .filter(Boolean) as Project[];
+      .filter(Boolean);
 
     return [...userProjects, ...memberProjects];
   }
 
-  async updateProject(id: string, updates: Partial<InsertProject>): Promise<Project | undefined> {
+  async updateProject(id, updates) {
     const project = this.projects.get(id);
     if (!project) return undefined;
 
@@ -321,13 +236,13 @@ export class MemStorage implements IStorage {
     return updatedProject;
   }
 
-  async deleteProject(id: string): Promise<boolean> {
+  async deleteProject(id) {
     return this.projects.delete(id);
   }
 
-  async addProjectMember(projectId: string, userId: string, role = "member"): Promise<ProjectMember> {
+  async addProjectMember(projectId, userId, role = "member") {
     const id = randomUUID();
-    const member: ProjectMember = {
+    const member = {
       id,
       projectId,
       userId,
@@ -338,20 +253,20 @@ export class MemStorage implements IStorage {
     return member;
   }
 
-  async getProjectMembers(projectId: string): Promise<(ProjectMember & { user: User })[]> {
+  async getProjectMembers(projectId) {
     const members = Array.from(this.projectMembers.values()).filter(
       member => member.projectId === projectId
     );
     
     return members.map(member => ({
       ...member,
-      user: this.users.get(member.userId)!,
+      user: this.users.get(member.userId),
     })).filter(member => member.user);
   }
 
-  async createTask(insertTask: InsertTask): Promise<Task> {
+  async createTask(insertTask) {
     const id = randomUUID();
-    const task: Task = {
+    const task = {
       ...insertTask,
       id,
       status: insertTask.status ?? "todo",
@@ -368,19 +283,19 @@ export class MemStorage implements IStorage {
     return task;
   }
 
-  async getTask(id: string): Promise<Task | undefined> {
+  async getTask(id) {
     return this.tasks.get(id);
   }
 
-  async getTasksByProject(projectId: string): Promise<Task[]> {
+  async getTasksByProject(projectId) {
     return Array.from(this.tasks.values()).filter(task => task.projectId === projectId);
   }
 
-  async getTasksByUser(userId: string): Promise<Task[]> {
+  async getTasksByUser(userId) {
     return Array.from(this.tasks.values()).filter(task => task.assigneeId === userId);
   }
 
-  async updateTask(id: string, updates: Partial<InsertTask>): Promise<Task | undefined> {
+  async updateTask(id, updates) {
     const task = this.tasks.get(id);
     if (!task) return undefined;
 
@@ -393,13 +308,13 @@ export class MemStorage implements IStorage {
     return updatedTask;
   }
 
-  async deleteTask(id: string): Promise<boolean> {
+  async deleteTask(id) {
     return this.tasks.delete(id);
   }
 
-  async createTimeEntry(insertEntry: InsertTimeEntry): Promise<TimeEntry> {
+  async createTimeEntry(insertEntry) {
     const id = randomUUID();
-    const entry: TimeEntry = {
+    const entry = {
       ...insertEntry,
       id,
       description: insertEntry.description ?? null,
@@ -411,15 +326,15 @@ export class MemStorage implements IStorage {
     return entry;
   }
 
-  async getTimeEntriesByTask(taskId: string): Promise<TimeEntry[]> {
+  async getTimeEntriesByTask(taskId) {
     return Array.from(this.timeEntries.values()).filter(entry => entry.taskId === taskId);
   }
 
-  async getTimeEntriesByUser(userId: string): Promise<TimeEntry[]> {
+  async getTimeEntriesByUser(userId) {
     return Array.from(this.timeEntries.values()).filter(entry => entry.userId === userId);
   }
 
-  async updateTimeEntry(id: string, updates: Partial<InsertTimeEntry>): Promise<TimeEntry | undefined> {
+  async updateTimeEntry(id, updates) {
     const entry = this.timeEntries.get(id);
     if (!entry) return undefined;
 
@@ -431,15 +346,15 @@ export class MemStorage implements IStorage {
     return updatedEntry;
   }
 
-  async getActiveTimeEntry(userId: string): Promise<TimeEntry | undefined> {
+  async getActiveTimeEntry(userId) {
     return Array.from(this.timeEntries.values()).find(
       entry => entry.userId === userId && !entry.endTime
     );
   }
 
-  async createComment(insertComment: InsertComment): Promise<Comment> {
+  async createComment(insertComment) {
     const id = randomUUID();
-    const comment: Comment = {
+    const comment = {
       ...insertComment,
       id,
       createdAt: new Date(),
@@ -448,20 +363,20 @@ export class MemStorage implements IStorage {
     return comment;
   }
 
-  async getCommentsByTask(taskId: string): Promise<(Comment & { user: User })[]> {
+  async getCommentsByTask(taskId) {
     const comments = Array.from(this.comments.values()).filter(
       comment => comment.taskId === taskId
     );
     
     return comments.map(comment => ({
       ...comment,
-      user: this.users.get(comment.userId)!,
+      user: this.users.get(comment.userId),
     })).filter(comment => comment.user);
   }
 
-  async createActivityLog(log: Omit<ActivityLog, 'id' | 'createdAt'>): Promise<ActivityLog> {
+  async createActivityLog(log) {
     const id = randomUUID();
-    const activityLog: ActivityLog = {
+    const activityLog = {
       ...log,
       id,
       createdAt: new Date(),
@@ -470,15 +385,15 @@ export class MemStorage implements IStorage {
     return activityLog;
   }
 
-  async getActivityLogsByUser(userId: string): Promise<ActivityLog[]> {
+  async getActivityLogsByUser(userId) {
     return Array.from(this.activityLogs.values()).filter(log => log.userId === userId);
   }
 
-  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+  async getUserSettings(userId) {
     return Array.from(this.userSettings.values()).find(settings => settings.userId === userId);
   }
 
-  async updateUserSettings(userId: string, settingsUpdate: Partial<UserSettings>): Promise<UserSettings> {
+  async updateUserSettings(userId, settingsUpdate) {
     const existing = await this.getUserSettings(userId);
     
     if (existing) {
@@ -487,7 +402,7 @@ export class MemStorage implements IStorage {
       return updated;
     } else {
       const id = randomUUID();
-      const settings: UserSettings = {
+      const settings = {
         id,
         userId,
         theme: "light",
@@ -501,12 +416,7 @@ export class MemStorage implements IStorage {
     }
   }
 
-  async getTaskMetrics(userId?: string): Promise<{
-    completedTasks: number;
-    avgCompletionTime: number;
-    teamProductivity: number;
-    overdueTasks: number;
-  }> {
+  async getTaskMetrics(userId) {
     const allTasks = Array.from(this.tasks.values());
     const userTasks = userId ? allTasks.filter(task => task.assigneeId === userId) : allTasks;
     
@@ -517,18 +427,13 @@ export class MemStorage implements IStorage {
 
     return {
       completedTasks,
-      avgCompletionTime: 2.4, // Mock average in hours
+      avgCompletionTime: 2.4,
       teamProductivity: 94,
       overdueTasks,
     };
   }
 
-  async getDashboardInsights(userId?: string): Promise<{
-    focusTime: string;
-    completionRate: number;
-    teamVelocity: number;
-    bestWorkHours: string;
-  }> {
+  async getDashboardInsights(userId) {
     return {
       focusTime: "6.2h",
       completionRate: 87,

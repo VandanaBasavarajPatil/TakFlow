@@ -1,22 +1,18 @@
 import { apiRequest } from "./queryClient";
 
-export function getAuthToken(): string | null {
+export function getAuthToken() {
   return localStorage.getItem("token");
 }
 
-export function setAuthToken(token: string): void {
+export function setAuthToken(token) {
   localStorage.setItem("token", token);
 }
 
-export function removeAuthToken(): void {
+export function removeAuthToken() {
   localStorage.removeItem("token");
 }
 
-export async function authenticatedRequest(
-  method: string,
-  url: string,
-  data?: unknown
-): Promise<Response> {
+export async function authenticatedRequest(method, url, data) {
   const token = getAuthToken();
   
   const res = await fetch(url, {
@@ -30,7 +26,6 @@ export async function authenticatedRequest(
 
   if (!res.ok) {
     if (res.status === 401) {
-      // Token expired or invalid
       removeAuthToken();
       window.location.href = "/login";
     }

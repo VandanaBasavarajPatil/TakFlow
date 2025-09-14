@@ -1,23 +1,59 @@
-import type { Express, Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { createServer } from "http";
+import { storage } from "./storage.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import { loginSchema, insertUserSchema, insertProjectSchema, insertTaskSchema, insertTimeEntrySchema } from "@shared/schema";
+import bcryptjs from "bcryptjs";
 import { z } from "zod";
 
 const JWT_SECRET = process.env.SESSION_SECRET || "your-secret-key";
 
-// Extend Express Request type to include user
-interface AuthenticatedRequest extends Request {
-  user: {
-    userId: string;
-    username: string;
-  };
-}
+// Validation schemas
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+const insertUserSchema = z.object({
+  username: z.string().min(1),
+  email: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  avatar: z.string().optional(),
+  role: z.string().default("employee"),
+});
+
+const insertProjectSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  status: z.string().default("planning"),
+  deadline: z.string().optional(),
+  progress: z.number().default(0),
+  createdBy: z.string(),
+});
+
+const insertTaskSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().optional(),
+  status: z.string().default("todo"),
+  priority: z.string().default("medium"),
+  dueDate: z.string().optional(),
+  progress: z.number().default(0),
+  projectId: z.string().optional(),
+  assigneeId: z.string().optional(),
+  createdBy: z.string(),
+});
+
+const insertTimeEntrySchema = z.object({
+  taskId: z.string(),
+  userId: z.string(),
+  startTime: z.string(),
+  endTime: z.string().optional(),
+  duration: z.number().default(0),
+  description: z.string().optional(),
+});
 
 // Middleware to verify JWT token
-function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -25,7 +61,7 @@ function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextF
     return res.status(401).json({ message: 'Access token required' });
   }
 
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+  jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
@@ -34,13 +70,12 @@ function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextF
   });
 }
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app) {
   // Authentication routes
   app.post("/api/auth/register", async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
-      // Check if user already exists
       const existingUser = await storage.getUserByUsername(userData.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
@@ -56,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ 
         token, 
-        user: { ...user, password: undefined } // Don't send password in response
+        user: { ...user, password: undefined }
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -75,7 +110,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcryptjs.compare(password, user.password);
       if (!isValidPassword) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -121,7 +156,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const updates = req.body;
       
-      // Users can only update their own profile, unless they're a scrum master
       const currentUser = await storage.getUser(req.user.userId);
       if (currentUser?.role !== 'scrum_master' && req.user.userId !== id) {
         return res.status(403).json({ message: "Not authorized to update this user" });
@@ -208,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let tasks;
       
       if (projectId) {
-        tasks = await storage.getTasksByProject(projectId as string);
+        tasks = await storage.getTasksByProject(projectId);
       } else {
         tasks = await storage.getTasksByUser(req.user.userId);
       }
@@ -279,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let entries;
       
       if (taskId) {
-        entries = await storage.getTimeEntriesByTask(taskId as string);
+        entries = await storage.getTimeEntriesByTask(taskId);
       } else {
         entries = await storage.getTimeEntriesByUser(req.user.userId);
       }
